@@ -89,26 +89,50 @@ export const connectingWithContract = async () => {
 
 //   return realTime;
 // };
+// export const convertTime = (time) => {
+//   // const newTime = new Date(time);
+//    // Convert BigInt to milliseconds (number)
+//    const milliseconds = Number(time); // This may lose precision for large BigInts
+
+//    // Create a Date object from milliseconds
+//    const newTime = new Date(milliseconds);
+
+//   const realTime =
+//     newTime.getHours() +
+//     ":" +
+//     newTime.getMinutes() +
+//     ":" +
+//     newTime.getSeconds() +
+//     "  Date:" +
+//     newTime.getDate() +
+//     "/" +
+//     (newTime.getMonth() + 1) +
+//     "/" +
+//     newTime.getFullYear();
+
+//   return realTime;
+// };
+
+
 export const convertTime = (time) => {
-  // const newTime = new Date(time);
-   // Convert BigInt to milliseconds (number)
-   const milliseconds = Number(time); // This may lose precision for large BigInts
+  // Ensure that time is converted to milliseconds if it's in seconds
+  const timestamp = typeof time === 'bigint' ? time * 1000n : BigInt(time) * 1000n;
 
-   // Create a Date object from milliseconds
-   const newTime = new Date(milliseconds);
+  // Create a Date object from the provided timestamp
+  const newTime = new Date(Number(timestamp));
 
-  const realTime =
-    newTime.getHours() +
-    ":" +
-    newTime.getMinutes() +
-    ":" +
-    newTime.getSeconds() +
-    "  Date:" +
-    newTime.getDate() +
-    "/" +
-    (newTime.getMonth() + 1) +
-    "/" +
-    newTime.getFullYear();
+  // Extract individual components of the date and time
+  const hours = newTime.getHours().toString().padStart(2, '0');
+  const minutes = newTime.getMinutes().toString().padStart(2, '0');
+  const seconds = newTime.getSeconds().toString().padStart(2, '0');
+  const date = newTime.getDate();
+  const month = newTime.getMonth() + 1;
+  const year = newTime.getFullYear();
 
-  return realTime;
+  // Construct the formatted date and time string
+  const formattedTime = `${hours}:${minutes}:${seconds}  Date:${date}/${month}/${year}`;
+
+  return formattedTime;
 };
+
+
