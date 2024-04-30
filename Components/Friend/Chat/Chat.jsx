@@ -43,14 +43,15 @@ const Chat = ({
 
   useEffect(() => {
     // Generate AES key based on the chat code
-    if (currentUserName && currentUserAddress && friendMsg.length > 0) {
+    if (currentUserName && currentUserAddress) {
       const chatCode = generateChatCode(account, currentUserAddress);
       const key = generateAESKey(chatCode);
       setAesKey(key);
+      console.log(aesKey);
     }
   }, [currentUserName, currentUserAddress, friendMsg]);
 
-  const [aesKey, setAesKey] = useState(null);
+  
 
   // Function to generate chat code
   const generateChatCode = (pubkey1, pubkey2) => {
@@ -67,28 +68,48 @@ const Chat = ({
   };
 
   // AES encryption function
+  const [aesKey, setAesKey] = useState(generateAESKey(generateChatCode(account, currentUserAddress)));
   // AES encryption function
 const encryptMessage = (message) => {
   if (!aesKey) {
-    console.error('AES key is not defined.');
-    return '';
+    const chatCode = generateChatCode(account, currentUserAddress);
+    const key = generateAESKey(chatCode);
+    setAesKey(key);
   }
-  
+  const chatCode = generateChatCode(account, currentUserAddress);
+  const key = generateAESKey(chatCode);
+  setAesKey(key);
   const encryptedMessage = CryptoJS.AES.encrypt(message, aesKey, { iv: aesKey, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 });
+  
   return encryptedMessage.toString();
 };
 
+// AES decryption function
 // AES decryption function
 const decryptMessage = (encryptedMessage) => {
   if (!aesKey) {
     console.error('AES key is not defined.');
     return '';
   }
-  const decryptedBytes = CryptoJS.AES.decrypt(encryptedMessage, aesKey, { iv: aesKey, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 });
-  const decryptedMessage = decryptedBytes.toString(CryptoJS.enc.Utf8);
-  //console.log(aesKey);
-  return decryptedMessage;
+  if (!encryptedMessage) {
+    console.error('Encrypted message is not provided.');
+    return '';
+  }
+
+  console.log('Decrypting message with AES key:', aesKey);
+  console.log('Encrypted message:', encryptedMessage);
+
+  try {
+    const decryptedBytes = CryptoJS.AES.decrypt(encryptedMessage, aesKey, { iv: aesKey, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 });
+    const decryptedMessage = decryptedBytes.toString(CryptoJS.enc.Utf8);
+    console.log('Decrypted message:', decryptedMessage);
+    return decryptedMessage;
+  } catch (error) {
+    console.error('Error decrypting message:', error);
+    return '';
+  }
 };
+
 
 
   return (
