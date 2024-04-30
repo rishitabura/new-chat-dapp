@@ -9,10 +9,6 @@ import images from "../../../assets";
 import { convertTime } from "../../../Utils/apiFeature";
 import { Loader } from "../../index";
 
-// Fixed AES key (16 bytes for AES-128, 24 bytes for AES-192, 32 bytes for AES-256)
-// Access AES key from environment variable
-const aesKey = CryptoJS.enc.Utf8.parse(process.env.AES_KEY);
-
 const Chat = ({
   functionName,
   readMessage,
@@ -43,23 +39,57 @@ const Chat = ({
       readMessage(chatData.address);
       readUser(chatData.address);
     }
-  }, []);
+  }, [chatData.address]);
+
+  useEffect(() => {
+    // Generate AES key based on the chat code
+    if (currentUserName && currentUserAddress && friendMsg.length > 0) {
+      const chatCode = generateChatCode(account, currentUserAddress);
+      const key = generateAESKey(chatCode);
+      setAesKey(key);
+    }
+  }, [currentUserName, currentUserAddress, friendMsg]);
+
+  const [aesKey, setAesKey] = useState(null);
+
+  // Function to generate chat code
+  const generateChatCode = (pubkey1, pubkey2) => {
+    const address1 = pubkey1.toLowerCase();
+    const address2 = pubkey2.toLowerCase();
+    return address1 < address2
+      ? CryptoJS.SHA256(address1 + address2).toString()
+      : CryptoJS.SHA256(address2 + address1).toString();
+  };
+
+  // Function to generate AES key
+  const generateAESKey = (chatCode) => {
+    return CryptoJS.enc.Utf8.parse(chatCode);
+  };
 
   // AES encryption function
-  const encryptMessage = (message) => {
-    
+  // AES encryption function
+const encryptMessage = (message) => {
+  if (!aesKey) {
+    console.error('AES key is not defined.');
+    return '';
+  }
+  
+  const encryptedMessage = CryptoJS.AES.encrypt(message, aesKey, { iv: aesKey, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 });
+  return encryptedMessage.toString();
+};
 
-    const encryptedMessage = CryptoJS.AES.encrypt(message, aesKey, { iv: aesKey, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 });
-    return encryptedMessage.toString();
-  };
+// AES decryption function
+const decryptMessage = (encryptedMessage) => {
+  if (!aesKey) {
+    console.error('AES key is not defined.');
+    return '';
+  }
+  const decryptedBytes = CryptoJS.AES.decrypt(encryptedMessage, aesKey, { iv: aesKey, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 });
+  const decryptedMessage = decryptedBytes.toString(CryptoJS.enc.Utf8);
+  //console.log(aesKey);
+  return decryptedMessage;
+};
 
-  // AES decryption function
-  const decryptMessage = (encryptedMessage) => {
-    console.log('AES Key:', process.env.AES_KEY);
-    const decryptedBytes = CryptoJS.AES.decrypt(encryptedMessage, aesKey, { iv: aesKey, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 });
-    const decryptedMessage = decryptedBytes.toString(CryptoJS.enc.Utf8);
-    return decryptedMessage;
-  };
 
   return (
     <div className={Style.Chat}>
